@@ -1,0 +1,13 @@
+1、JavaSe 学习    14天 （两星期）
+2、JavaEe 学习    14天   (两星期）
+3、Java 设计模式  07天  (一星期）
+4、Maven            07天 
+4、Spring            14天
+5、MyBatis          07天
+6、MyBatis Plus   03天
+7、Spring boot    05天
+8、Spring Cloud Alibaba  07天
+9、RocketMq      
+10、Kafka
+11、JVM
+12、
