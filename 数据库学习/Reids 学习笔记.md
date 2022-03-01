@@ -113,4 +113,203 @@ OK
 |      | activerehashing yes                                  |                                                              | 指定是否激活重置哈希，默认为开启（后面在介绍 Redis 的哈希算法时具体介绍） |
 |      | include /path/to/local.conf                          |                                                              | 指定包含其它的配置文件，可以在同一主机上多个Redis实例之间使用同一份配置文件，而同时各个实例又拥有自己的特定配置文件 |
 
-# 4 Redis 数据类型
+# 4. Redis 数据类型
+
+Redis 支持五种数据类型：string (字符串)、hash（哈希）、list (列表)、set (集合) 及 zset(sorted set：有序集合)。
+
+## 4.1 String (字符串)
+
+string 是 redis 最基本的类型，你可以理解成与 Memcached 一模一样的类型，一个key 对应一个 value.
+
+string 类型是二进制安全的。意思是redis 的 string 可以包含任何数据。比如 jpg 图片或者序列化对象。
+
+string 类型是Redis 最基本的数据类型，string 类型的值最大能存储512M。
+
+**实例**
+
+```sh
+127.0.0.1:6379> SET testKey "testValue"
+OK
+127.0.0.1:6379> GET testKey
+"testValue"
+```
+
+在以上实例中我们使用了 Redis 的 **SET** 和 **GET** 命令。键为 testKey，对应的值为 **testValue**。
+
+注意：一个键最大能存储512M
+
+## 4.2 hash （哈希）
+
+Redis hash 是一个键值（key=>value）对集合。
+
+Redis hash 是一个 string 类型的 field 和 value 的映射表， hash 特别适合用于存储对象。
+
+**实例**
+
+```sh
+127.0.0.1:6379> HASET runoob field1 "hello" filed2 "world"
+(error) ERR unknown command 'HASET'
+127.0.0.1:6379> HMSET runoob field1 "hello" field2 "world"
+OK
+127.0.0.1:6379> HGET runoob field1
+"hello"
+```
+
+实例中，我们使用了Redis HMSET,HGET命令HMSET设置了两个field=>value对，HGET获取对应field对应的value。
+
+每个hash可以存储2<sup>32</sup> - 1 键值对（40多亿）。
+
+## 4.3  List (列表)
+
+Redis 列表是简单的字符串列表，按照插入顺序的排序。你可以添加一个元素列表的头部（左边）或者尾部（右边）。
+
+**实例**
+
+```
+127.0.0.1:6379> lpush runoob redis
+(integer) 1
+127.0.0.1:6379> lpush runoob mongodb
+(integer) 2
+127.0.0.1:6379> lpush runoob rabbitmq
+(integer) 3
+127.0.0.1:6379> lrange runoob 0 1
+1) "rabbitmq"
+2) "mongodb"
+127.0.0.1:6379> lrange runoob 0 0
+1) "rabbitmq"
+```
+
+列表最多可存储 232 - 1 元素 (4294967295, 每个列表可存储40多亿)。
+
+## 4.4 Set (集合)
+
+Redis 的 Set  是string 类型的无序集合。
+
+集合是通过哈希表实现的。所以，添加、删除、查找的复杂度都是O(1)。
+
+**sadd命令**
+
+添加一个string 元素到key对应的set集合，成功返回1，如果元素已经在集合中返回0。
+
+```sh
+sadd key member
+```
+
+**实例**
+
+```sh
+127.0.0.1:6379> sadd runoob redis
+(integer) 1
+127.0.0.1:6379> sadd runoob mogodb
+(integer) 1
+127.0.0.1:6379> sadd runoob mogodb
+(integer) 0
+127.0.0.1:6379> smembers runoob
+1) "mogodb"
+2) "redis"
+```
+
+以上实例中 mogodb添加了两次，但根据集合内元素的唯一性，第二次插入的元素将被忽略。
+
+集合中最大的成员数为 232 - 1(4294967295, 每个集合可存储40多亿个成员)。
+
+## 4.5 zset(sorted set:有序集合)
+
+Redis zset 和set 一样也是string 类型元素的集合，且不允许重复的成员。
+
+不同的是每个元素都会关联一个dobule类型的分数。redis 正是通过分数来为集合中的成员进行小到大的排序。
+
+zset 的成员 是唯一的，但分数（score）却可以重复。
+
+**zadd 命令**
+
+添加元素到集合，元素在集合中存在则更新对应score
+
+```sh
+zadd key score memeber
+```
+
+**实例**
+
+```sh
+127.0.0.1:6379> zadd runoob 0 redis
+(integer) 1
+127.0.0.1:6379> zadd runoob 0 mongodb
+(integer) 1
+127.0.0.1:6379> zadd runoob 2 rabbitmq
+(integer) 1
+127.0.0.1:6379> zadd runoob 1 rocketmq
+(integer) 1
+
+127.0.0.1:6379> zrangebyscore runoob 0 10
+1) "mongodb"
+2) "redis"
+3) "rocketmq"
+4) "rabbitmq"
+```
+
+# 5.redis 命令
+
+## 5.1 在远程服务上执行命令
+
+**连接远程服务端语法**(windows客户端连接Linux 服务端Redis)
+
+```sh
+redis-cli -h host -p port -a passowrd
+```
+
+
+
+```sh
+D:\redis\Redis-x64-3.2.100> .\redis-cli.exe -h 192.168.4.94 -p 6379 -a zoesoft@2021
+192.168.4.94:6379>
+```
+
+## 5.2 Redis keys 命令
+
+| 序号 | 命令                                      | 描述                                                         |
+| ---- | ----------------------------------------- | ------------------------------------------------------------ |
+| 1    | DEL key                                   | 该命令用于在 key 存在时删除 key。                            |
+| 2    | DUMP key                                  | 序列化给定 key ，并返回被序列化的值。                        |
+| 3    | EXISTS key                                | 检查给定 key 是否存在。                                      |
+| 4    | EXPIRE key econds                         | 为给定key设置过期时间，以秒计。                              |
+| 5    | EXPIREAT key timestamp                    | EXPIREAT 的作用和 EXPIRE 类似，都用于为 key 设置过期时间。 不同在于 EXPIREAT 命令接受的时间参数是 UNIX 时间戳(unix timestamp)。 |
+| 6    | PEXPIRE key milliseconds                  | 设置 key 的过期时间以毫秒计。                                |
+| 7    | PEXPIREAT key milliseconds-timestamp      | 设置 key 过期时间的时间戳(unix timestamp) 以毫秒计           |
+| 8    | KEYS pattern                              | 查找所有符合给定模式( pattern)的 key 。                      |
+| 9    | MOVE key db                               | 将当前数据库的key移动到给定的数据库db当中                    |
+| 10   | PERSIS key                                | 移除 key 的过期时间，key 将持久保持。                        |
+| 11   | PTTL key                                  | 以毫秒为单位返回 key 的剩余的过期时间。                      |
+| 12   | TTL key                                   | 以秒为单位，返回给定 key 的剩余生存时间(TTL, time to live)。 |
+| 13   | RANDOMKEY                                 | 从当前数据库中随机返回一个 key 。                            |
+| 14   | RENAME key newkey                         | 修改 key 的名称                                              |
+| 15   | RENAMENX key newkey                       | 仅当 newkey 不存在时，将 key 改名为 newkey 。                |
+| 16   | SCAN cursor [MATCH pattern]\[Count count] | 迭代数据库中的数据库键。                                     |
+| 17   | TYPE key                                  | 返回 key 所储存的值的类型。                                  |
+
+## 5.3 Redis 字符串命令
+
+| 序号 | 命令                         | 描述                                                         |
+| ---- | ---------------------------- | ------------------------------------------------------------ |
+| 1    | SET key value                | 设置指定key的值                                              |
+| 2    | GET key                      | 获取指定key的值                                              |
+| 3    | GETRANGE key start end       | 返回 key 中字符串值的子字符                                  |
+| 4    | GETSET key value             | 将给定 key 的值设为 value ，并返回 key 的旧值(old value)。   |
+| 5    | GETBIT key offset            | 对 key 所储存的字符串值，获取指定偏移量上的位(bit)。         |
+| 6    | MGET key1[key...]            | 获取所有(一个或多个)给定 key 的值。                          |
+| 7    | SETBIT key offset value      | 对 key 所储存的字符串值，设置或清除指定偏移量上的位(bit)。   |
+| 8    | SETEX key seconds value      | 将值 value 关联到 key ，并将 key 的过期时间设为 seconds (以秒为单位)。 |
+| 9    | SETNX key value              | 只有在 key 不存在时设置 key 的值。                           |
+| 10   | SETRANGE key offset value    | 用 value 参数覆写给定 key 所储存的字符串值，从偏移量 offset 开始。 |
+| 11   | STRLEN key                   | 返回 key 所储存的字符串值的长度。                            |
+| 12   | MSET key value [key value]   | 同时设置一个或多个key-value对                                |
+| 13   | MSETNT key value [key value] | 同时设置一个或多个 key-value 对，当且仅当所有给定 key 都不存在。 |
+| 14   | PSETEX key millseconds value | 这个命令和 SETEX 命令相似，但它以毫秒为单位设置 key 的生存时间，而不是像 SETEX 命令那样，以秒为单位。 |
+| 15   | INCR key                     | 将 key 中储存的数字值增一。                                  |
+| 16   | INCRBY key increment         | 将 key 所储存的值加上给定的增量值（increment）               |
+| 17   | INCRBYFLOAT key increment    | 将 key 所储存的值加上给定的浮点增量值（increment） 。        |
+| 18   | DECR key                     | 将 key 中储存的数字值减一。                                  |
+| 19   | DECRBY  key decrement        | key 所储存的值减去给定的减量值（decrement）                  |
+| 20   | APPEND key value             | 如果 key 已经存在并且是一个字符串， APPEND 命令将指定的 value 追加到该 key 原来值（value）的末尾。 |
+
+## 5.4 Redis 字符串命令
